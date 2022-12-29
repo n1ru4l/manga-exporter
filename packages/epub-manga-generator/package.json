@@ -1,23 +1,6 @@
 {
   "name": "@manga-exporter/epub-manga-generator",
   "version": "0.0.0",
-  "exports": {
-    ".": {
-      "require": {
-        "types": "./dist/typings/main.d.cts",
-        "default": "./dist/cjs/index.js"
-      },
-      "import": {
-        "types": "./dist/typings/main.d.ts",
-        "default": "./dist/esm/main.js"
-      },
-      "default": {
-        "types": "./dist/typings/main.d.ts",
-        "default": "./dist/esm/main.js"
-      }
-    },
-    "./package.json": "./package.json"
-  },
   "type": "module",
   "description": "Generate a mange from a list of images.",
   "dependencies": {
@@ -29,11 +12,28 @@
     "@types/nodepub": "3.0.0",
     "@types/sharp": "0.31.0"
   },
-  "main": "dist/cjs/main.js",
-  "module": "dist/esm/main.js",
-  "typings": "dist/typings/main.d.ts",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "typings": "dist/typings/index.d.ts",
   "typescript": {
-    "definition": "dist/typings/main.d.ts"
+    "definition": "dist/typings/index.d.ts"
+  },
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/typings/index.d.cts",
+        "default": "./dist/cjs/index.js"
+      },
+      "import": {
+        "types": "./dist/typings/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "default": {
+        "types": "./dist/typings/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./package.json": "./package.json"
   },
   "publishConfig": {
     "directory": "dist",

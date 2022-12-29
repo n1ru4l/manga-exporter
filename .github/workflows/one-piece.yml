@@ -18,6 +18,7 @@ jobs:
           path: "**/node_modules"
           key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
       - run: yarn install
+      - run: yarn build
       - run: node --loader ts-node/esm packages/demo/src/main.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

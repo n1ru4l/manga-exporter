@@ -7,10 +7,10 @@
     "skipLibCheck": true,
     "paths": {
       "@manga-exporter/epub-manga-generator": [
-        "./packages/epub-manga-generator/src/main.ts"
+        "./packages/epub-manga-generator/src/index.ts"
       ],
       "@manga-exporter/harvester-one-piece": [
-        "./packages/harvester-one-piece/src/main.ts"
+        "./packages/harvester-one-piece/src/index.ts"
       ]
     }
   },

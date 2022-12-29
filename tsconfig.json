@@ -6,8 +6,16 @@
     "moduleResolution": "node",
     "skipLibCheck": true
   },
-  "include": ["packages/*/src/**/*"],
+  "include": ["packages"],
   "ts-node": {
     "files": true
+  },
+  "paths": {
+    "@manga-exporter/epub-manga-generator": [
+      "packages/epub-manga-generator/src/main.ts"
+    ],
+    "@manga-exporter/harvester-one-piece": [
+      "packages/harvester-one-piece/src/main.ts"
+    ]
   }
 }

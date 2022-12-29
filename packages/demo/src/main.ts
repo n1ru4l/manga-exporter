@@ -1,5 +1,5 @@
-import { generateEPubManga } from "./generate-epub-manga.js";
-import { fetchLatestChapterFromReadOnePiece } from "./fetcher/read-one-piece.js";
+import { generateEPubManga } from "@manga-exporter/epub-manga-generator";
+import { fetchLatestChapterFromReadOnePiece } from "@manga-exporter/harvester-one-piece";
 import * as fs from "fs/promises";
 
 /** TODO: make it flexible :) */
@@ -38,5 +38,5 @@ async function fetchOnePieceMangaChapterFetcher(config: {
 }
 
 fetchOnePieceMangaChapterFetcher({
-  latestChapterId: "1070",
+  latestChapterId: process.env.LATEST_CHAPTER_ID!,
 });

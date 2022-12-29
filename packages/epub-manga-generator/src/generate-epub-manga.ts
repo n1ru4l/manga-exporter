@@ -1,6 +1,7 @@
 import * as nodepub from "nodepub-rtl";
 import * as _sharp from "sharp";
 import * as fs from "fs/promises";
+import * as path from "path";
 
 const sharp = (_sharp as any).default as typeof _sharp;
 
@@ -172,7 +173,7 @@ export async function generateEPubManga(config: {
   }
 
   await epub.writeEPUB(
-    "/Users/laurinquast/Projects/manga-exporter",
+    path.dirname(config.outputFilename),
     config.outputFilename
   );
 }

@@ -1,0 +1,15 @@
+{
+  "name": "@manga-exporter/demo",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "One Piece manga exporter",
+  "dependencies": {
+    "@manga-exporter/epub-manga-generator": "0.0.0",
+    "@manga-exporter/harvester-one-piece": "0.0.0"
+  },
+  "devDependencies": {
+    "ts-node": "10.9.1"
+  },
+  "bob": false
+}

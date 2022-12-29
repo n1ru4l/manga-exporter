@@ -1,0 +1,42 @@
+{
+  "name": "@manga-exporter/epub-manga-generator",
+  "version": "0.0.0",
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/typings/main.d.cts",
+        "default": "./dist/cjs/index.js"
+      },
+      "import": {
+        "types": "./dist/typings/main.d.ts",
+        "default": "./dist/esm/main.js"
+      },
+      "default": {
+        "types": "./dist/typings/main.d.ts",
+        "default": "./dist/esm/main.js"
+      }
+    },
+    "./package.json": "./package.json"
+  },
+  "type": "module",
+  "description": "Generate a mange from a list of images.",
+  "dependencies": {
+    "nodepub-rtl": "1.0.1",
+    "image-size": "1.0.2",
+    "sharp": "0.31.3"
+  },
+  "devDependencies": {
+    "@types/nodepub": "3.0.0",
+    "@types/sharp": "0.31.0"
+  },
+  "main": "dist/cjs/main.js",
+  "module": "dist/esm/main.js",
+  "typings": "dist/typings/main.d.ts",
+  "typescript": {
+    "definition": "dist/typings/main.d.ts"
+  },
+  "publishConfig": {
+    "directory": "dist",
+    "access": "public"
+  }
+}

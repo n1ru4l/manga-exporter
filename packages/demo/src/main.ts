@@ -3,7 +3,9 @@ import { fetchLatestChapterFromReadOnePiece } from "@manga-exporter/harvester-on
 import * as fs from "fs/promises";
 import { Octokit } from "@octokit/rest";
 
-const oktokit = new Octokit();
+const oktokit = new Octokit({
+  auth: process.env.GITHUB_TOKEN,
+});
 
 /** TODO: make it flexible :) */
 const oasisSize = {

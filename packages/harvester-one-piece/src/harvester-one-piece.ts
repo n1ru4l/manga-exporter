@@ -61,10 +61,13 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
         isChapterPageRequest(url)
       ) {
         const buffer = await response.buffer();
-        const filePath = path
-          .join(tmpDir, url.split("/").pop()!)
-          // We add a 0 to the page number to make sure the pages are sorted correctly later on.
+        const fileName = url
+          .split("/")
+          .pop()!
           .replace(/-(\d)\.jpg$/, "-0$1.jpg");
+        console.log("got", fileName);
+        const filePath = path.join(tmpDir, fileName);
+        // We add a 0 to the page number to make sure the pages are sorted correctly later on.
         await fs.writeFile(filePath, buffer);
         images.push(filePath);
 

@@ -1,6 +1,9 @@
 import { generateEPubManga } from "@manga-exporter/epub-manga-generator";
 import { fetchLatestChapterFromReadOnePiece } from "@manga-exporter/harvester-one-piece";
 import * as fs from "fs/promises";
+import { Octokit } from "@octokit/rest";
+
+const oktokit = new Octokit();
 
 /** TODO: make it flexible :) */
 const oasisSize = {
@@ -12,10 +15,11 @@ async function fetchOnePieceMangaChapterFetcher(config: {
   latestChapterId: string;
 }) {
   const result = await fetchLatestChapterFromReadOnePiece(config);
+  const outputFilename = `one-piece-${config.latestChapterId}`;
 
   if (result === null) {
     console.log("Could not fetch latest chapter.");
-    return;
+    return null;
   }
   try {
     await generateEPubManga({
@@ -29,14 +33,55 @@ async function fetchOnePieceMangaChapterFetcher(config: {
         size: oasisSize,
       },
       folder: result.folder,
-      outputFilename: `one-piece-${config.latestChapterId}`,
+      outputFilename,
       pages: result.images,
     });
+    return outputFilename;
   } finally {
     await fs.rm(result.folder, { recursive: true });
   }
 }
 
-fetchOnePieceMangaChapterFetcher({
-  latestChapterId: process.env.LATEST_CHAPTER_ID!,
-});
+async function main() {
+  const issue = await oktokit.issues.get({
+    owner: "n1ru4l",
+    repo: "manga-exporter",
+    issue_number: 1,
+  });
+
+  if (!issue.data.body) {
+    throw new Error("Could not fetch issue body.");
+  }
+
+  const latestChapterId = parseInt(issue.data.body, 10);
+
+  if (isNaN(latestChapterId)) {
+    throw new Error("Could not parse latest chapter id.");
+  }
+
+  const newChapterId = latestChapterId + 1;
+
+  const filename = await fetchOnePieceMangaChapterFetcher({
+    latestChapterId: String(newChapterId),
+  });
+
+  if (filename === null) {
+    console.log("Could not fetch latest chapter.");
+    return;
+  }
+
+  // TODO: Attempt sending to Kindle
+
+  // TODO: Notify on Telegram
+
+  // TODO: Update issue body with new chapter id
+
+  await oktokit.issues.update({
+    owner: "n1ru4l",
+    repo: "manga-exporter",
+    issue_number: 1,
+    body: String(newChapterId),
+  });
+}
+
+main();

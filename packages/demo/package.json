@@ -6,7 +6,8 @@
   "description": "One Piece manga exporter",
   "dependencies": {
     "@manga-exporter/epub-manga-generator": "0.0.0",
-    "@manga-exporter/harvester-one-piece": "0.0.0"
+    "@manga-exporter/harvester-one-piece": "0.0.0",
+    "@octokit/rest": "19.0.5"
   },
   "devDependencies": {
     "ts-node": "10.9.1"

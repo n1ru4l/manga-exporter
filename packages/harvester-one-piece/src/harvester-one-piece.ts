@@ -31,6 +31,7 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
     const isChapterPageRequest = matchesChapterPage(config.latestChapterId);
     const images: Array<string> = [];
     const page = await browser.newPage();
+    page.setDefaultTimeout(60_000);
 
     // TODO: Instead of waiting for the response order and sorting the images,
     // we could instead traverse the DOM for the correct order.

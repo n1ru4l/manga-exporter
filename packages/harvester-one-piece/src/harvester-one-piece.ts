@@ -9,6 +9,20 @@ const buildChapterUrl = (chapterId: string) =>
 const matchesChapterPage = (_chapterId: string) => (url: string) =>
   /.*one-piece-....-\d+.jpg/.test(url);
 
+const createDeferred = <T>() => {
+  let resolve: (value: T) => void;
+  let reject: (reason: any) => void;
+  const promise = new Promise<T>((_resolve, _reject) => {
+    resolve = _resolve;
+    reject = _reject;
+  });
+  return {
+    promise,
+    resolve: resolve!,
+    reject: reject!,
+  };
+};
+
 export async function fetchLatestChapterFromReadOnePiece(config: {
   latestChapterId: string;
 }) {
@@ -33,6 +47,9 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
     const page = await browser.newPage();
     page.setDefaultTimeout(60_000);
 
+    const d = createDeferred<void>();
+    let timeout: number;
+
     // TODO: Instead of waiting for the response order and sorting the images,
     // we could instead traverse the DOM for the correct order.
     // that approach might be more future proof in case the filenames change.
@@ -50,10 +67,19 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
           .replace(/-(\d)\.jpg$/, "-0$1.jpg");
         await fs.writeFile(filePath, buffer);
         images.push(filePath);
+
+        // If we already have 10 images
+        // we can assume that the chapter is almost fully loaded.
+        if (timeout) {
+          clearTimeout(timeout);
+        }
+        if (images.length > 10) {
+          setTimeout(() => d.resolve(), 5000);
+        }
       }
     });
     await page.goto(url);
-    await page.waitForNetworkIdle();
+    await d.promise;
     await browser?.close();
 
     /** we can sort em here because we padded the chapter number. Potentially dangerous. */

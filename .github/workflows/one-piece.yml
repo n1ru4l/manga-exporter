@@ -1,9 +1,9 @@
 name: Try importing the latest One Piece Chapter
 
 on:
-  # schedule:
-  #   # Every tenth minute from Thursday through Monday
-  #   - cron: "*/10 * * * 4/6"
+  schedule:
+    # Every tenth minute from Thursday through Monday
+    - cron: "*/10 * * * 4/6"
   workflow_dispatch:
 jobs:
   run:

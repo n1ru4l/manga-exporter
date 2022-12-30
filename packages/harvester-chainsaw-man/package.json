@@ -1,0 +1,36 @@
+{
+  "name": "@manga-exporter/harvester-one-chainsaw-man",
+  "version": "0.0.0",
+  "dependencies": {
+    "puppeteer": "19.4.1"
+  },
+  "devDependencies": {},
+  "type": "module",
+  "publishConfig": {
+    "directory": "dist",
+    "access": "public"
+  },
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "typings": "dist/typings/index.d.ts",
+  "typescript": {
+    "definition": "dist/typings/index.d.ts"
+  },
+  "exports": {
+    ".": {
+      "require": {
+        "types": "./dist/typings/index.d.cts",
+        "default": "./dist/cjs/index.js"
+      },
+      "import": {
+        "types": "./dist/typings/index.d.ts",
+        "default": "./dist/esm/index.js"
+      },
+      "default": {
+        "types": "./dist/typings/index.d.ts",
+        "default": "./dist/esm/index.js"
+      }
+    },
+    "./package.json": "./package.json"
+  }
+}

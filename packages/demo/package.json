@@ -7,7 +7,8 @@
   "dependencies": {
     "@manga-exporter/epub-manga-generator": "0.0.0",
     "@manga-exporter/harvester-one-piece": "0.0.0",
-    "@octokit/rest": "19.0.5"
+    "@octokit/rest": "19.0.5",
+    "telegraf": "4.11.2"
   },
   "devDependencies": {
     "ts-node": "10.9.1"

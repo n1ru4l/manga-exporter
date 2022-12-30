@@ -19,3 +19,5 @@ jobs:
       - run: node --loader ts-node/esm packages/demo/src/main.ts
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}

@@ -2,10 +2,13 @@ import { generateEPubManga } from "@manga-exporter/epub-manga-generator";
 import { fetchLatestChapterFromReadOnePiece } from "@manga-exporter/harvester-one-piece";
 import * as fs from "fs/promises";
 import { Octokit } from "@octokit/rest";
+import { Telegraf } from "telegraf";
 
 const oktokit = new Octokit({
   auth: process.env.GITHUB_TOKEN,
 });
+
+const telegraf = new Telegraf(process.env.TELEGRAM_TOKEN!);
 
 /** TODO: make it flexible :) */
 const oasisSize = {
@@ -75,6 +78,7 @@ async function main() {
   // TODO: Attempt sending to Kindle
 
   // TODO: Notify on Telegram
+  await telegraf.telegram.sendDocument(process.env.TELEGRAM_CHAT_ID!, filename);
 
   // TODO: Update issue body with new chapter id
 

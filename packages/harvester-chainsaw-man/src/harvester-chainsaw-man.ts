@@ -82,8 +82,8 @@ export async function fetchChapterFromChainsawMangaOnline(config: {
   }
 }
 
-const result = await fetchChapterFromChainsawMangaOnline({
-  chapterId: "98",
-});
+// const result = await fetchChapterFromChainsawMangaOnline({
+//   chapterId: "98",
+// });
 
-console.log(result);
+// console.log(result);

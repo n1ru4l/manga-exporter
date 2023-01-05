@@ -13,6 +13,8 @@ const getPageFilename = (page: string, suffix?: "1" | "2") => {
   return `${filename}${suffix ? "-" + suffix : ""}.jpg`;
 };
 
+const fit = "contain";
+
 /**
  * Generate a epub manga file from a folder of images.
  * Takes care of resizing the images to the correct size and handling double pages.
@@ -47,9 +49,9 @@ export async function generateEPubManga(config: {
     if (info.width > info.height) {
       const imageBuffer = await sharp(await fs.readFile(page))
         .resize({
-          width: 1264 * 2,
-          height: 1680,
-          fit: "fill",
+          width: config.config.size.width * 2,
+          height: config.config.size.height,
+          fit,
         })
         .png()
         .toBuffer();
@@ -61,9 +63,9 @@ export async function generateEPubManga(config: {
       await sharp(imageBuffer)
         .rotate(270)
         .resize({
-          width: 1264,
-          height: 1680,
-          fit: "fill",
+          width: config.config.size.width,
+          height: config.config.size.height,
+          fit,
         })
         .jpeg()
         .toFile(horizontalName);
@@ -71,8 +73,8 @@ export async function generateEPubManga(config: {
       const left = await sharp(imageBuffer)
         // divide into 2 parts 0 to width/2 and width/2 to width
         .extract({
-          width: 1264,
-          height: 1680,
+          width: config.config.size.width,
+          height: config.config.size.height,
           left: 0,
           top: 0,
         })
@@ -83,9 +85,9 @@ export async function generateEPubManga(config: {
 
       const right = await sharp(imageBuffer)
         .extract({
-          width: 1264,
-          height: 1680,
-          left: 1264,
+          width: config.config.size.width,
+          height: config.config.size.height,
+          left: config.config.size.width,
           top: 0,
         })
         .jpeg()
@@ -114,9 +116,9 @@ export async function generateEPubManga(config: {
     } else {
       await sharp(await fs.readFile(page))
         .resize({
-          width: 1264,
-          height: 1680,
-          fit: "fill",
+          width: config.config.size.width,
+          height: config.config.size.height,
+          fit,
         })
         .jpeg()
         .toFile(page);

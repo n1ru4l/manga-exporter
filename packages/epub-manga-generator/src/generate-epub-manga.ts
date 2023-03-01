@@ -2,6 +2,7 @@ import * as nodepub from "nodepub-rtl";
 import * as _sharp from "sharp";
 import * as fs from "fs/promises";
 import * as path from "path";
+import * as os from "os";
 
 const sharp = (_sharp as any).default as typeof _sharp;
 
@@ -20,7 +21,6 @@ const fit = "contain";
  * Takes care of resizing the images to the correct size and handling double pages.
  */
 export async function generateEPubManga(config: {
-  folder: string;
   config: {
     id: string;
     title: string;
@@ -34,6 +34,7 @@ export async function generateEPubManga(config: {
   /** Ordered List of Manga Pages */
   pages: Array<string>;
 }) {
+  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "manga-exporter-"));
   const pages: Array<{ no: string; asset: string }> = [];
   const allImages = new Set<string>();
 
@@ -47,6 +48,10 @@ export async function generateEPubManga(config: {
     }
 
     if (info.width > info.height) {
+      const out = path.join(tmpDir, String(index) + ".jpg");
+      const leftOut = path.join(tmpDir, String(index) + "-2.jpg");
+      const rightOut = path.join(tmpDir, String(index) + "-1.jpg");
+
       const imageBuffer = await sharp(await fs.readFile(page))
         .resize({
           width: config.config.size.width * 2,
@@ -56,10 +61,6 @@ export async function generateEPubManga(config: {
         .png()
         .toBuffer();
 
-      const horizontalName = page;
-      const leftName = page.replace(/\.jpg$/, "-2.jpg");
-      const rightName = page.replace(/\.jpg$/, "-1.jpg");
-
       await sharp(imageBuffer)
         .rotate(270)
         .resize({
@@ -68,7 +69,7 @@ export async function generateEPubManga(config: {
           fit,
         })
         .jpeg()
-        .toFile(horizontalName);
+        .toFile(out);
 
       const left = await sharp(imageBuffer)
         // divide into 2 parts 0 to width/2 and width/2 to width
@@ -81,7 +82,7 @@ export async function generateEPubManga(config: {
         .jpeg()
         .toBuffer();
 
-      await sharp(left).trim().toFile(leftName);
+      await sharp(left).trim().toFile(leftOut);
 
       const right = await sharp(imageBuffer)
         .extract({
@@ -93,27 +94,29 @@ export async function generateEPubManga(config: {
         .jpeg()
         .toBuffer();
 
-      await sharp(right).trim().toFile(rightName);
+      await sharp(right).trim().toFile(rightOut);
 
-      allImages.add(horizontalName);
-      allImages.add(rightName);
-      allImages.add(leftName);
+      allImages.add(out);
+      allImages.add(rightOut);
+      allImages.add(leftOut);
 
       pages.push(
         {
           no: `${pageCount}`,
-          asset: getPageFilename(page),
+          asset: getPageFilename(out),
         },
         {
           no: `${pageCount} - 1`,
-          asset: getPageFilename(page, "1"),
+          asset: getPageFilename(out, "1"),
         },
         {
           no: `${pageCount} - 2`,
-          asset: getPageFilename(page, "2"),
+          asset: getPageFilename(out, "2"),
         }
       );
     } else {
+      const out = path.join(tmpDir, String(index) + ".jpg");
+
       await sharp(await fs.readFile(page))
         .resize({
           width: config.config.size.width,
@@ -121,13 +124,13 @@ export async function generateEPubManga(config: {
           fit,
         })
         .jpeg()
-        .toFile(page);
+        .toFile(out);
 
-      allImages.add(page);
+      allImages.add(out);
 
       pages.push({
         no: `${pageCount}`,
-        asset: getPageFilename(page),
+        asset: getPageFilename(out),
       });
     }
   }

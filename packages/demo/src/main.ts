@@ -37,7 +37,6 @@ async function fetchOnePieceMangaChapterFetcher(config: {
         cover: result.cover,
         size: oasisSize,
       },
-      folder: result.folder,
       outputFilename,
       pages: result.images,
     });

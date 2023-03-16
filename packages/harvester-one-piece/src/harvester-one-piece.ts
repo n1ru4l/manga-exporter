@@ -7,7 +7,7 @@ const buildChapterUrl = (chapterId: string) =>
   `https://ww3.read-onepiece.net/manga/one-piece-chapter-${chapterId}/`;
 
 const matchesChapterPage = (_chapterId: string) => (url: string) =>
-  /.*one-piece-....-\d+.jpg/.test(url);
+  /.*one-piece-\d\d\d\d.?-\d+.jpe?g$/.test(url);
 
 const createDeferred = <T>() => {
   let resolve: (value: T) => void;
@@ -31,7 +31,7 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
 
   try {
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
     });
 
     tmpDir = await fs.mkdtemp(
@@ -45,10 +45,20 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
     const isChapterPageRequest = matchesChapterPage(config.latestChapterId);
     const images: Array<string> = [];
     const page = await browser.newPage();
-    page.setDefaultTimeout(60_000);
+    page.setDefaultTimeout(5_000);
 
     const d = createDeferred<void>();
     let timeout: number;
+
+    await page.setRequestInterception(true);
+
+    page.on("request", (request) => {
+      if (request.isNavigationRequest() && request.url() !== url) {
+        request.abort();
+        return;
+      }
+      request.continue();
+    });
 
     // TODO: Instead of waiting for the response order and sorting the images,
     // we could instead traverse the DOM for the correct order.

@@ -48,7 +48,10 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
     page.setDefaultTimeout(5_000);
 
     const d = createDeferred<void>();
-    let timeout: number;
+    let timeout = setTimeout(
+      () => d.reject(new Error("No manga found. Probably not published yet.")),
+      60_000
+    );
 
     await page.setRequestInterception(true);
 

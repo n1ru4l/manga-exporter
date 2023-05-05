@@ -74,20 +74,17 @@ async function main() {
     return;
   }
 
-  // TODO: Attempt sending to Kindle
   console.log(filename);
 
-  // TODO: Notify on Telegram
   await telegraf.telegram.sendMessage(
     process.env.TELEGRAM_CHAT_ID!,
     "New chapter available!"
   );
+
   await telegraf.telegram.sendDocument(process.env.TELEGRAM_CHAT_ID!, {
     source: await fs.readFile(`${filename}.epub`),
     filename: `${filename}.epub`,
   });
-
-  // TODO: Update issue body with new chapter id
 
   await oktokit.issues.update({
     owner: "n1ru4l",

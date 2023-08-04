@@ -4,7 +4,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 
 const buildChapterUrl = (chapterId: string) =>
-  `https://piece-one.live/manga/one-piece-chapter-${chapterId}/`;
+  `https://ww1.tcbscans.org/manga/one-piece/chapter-${chapterId}/`;
 
 const createDeferred = <T>() => {
   let resolve: (value: T) => void;
@@ -28,7 +28,7 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
 
   try {
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
     });
 
     tmpDir = await fs.mkdtemp(
@@ -85,18 +85,24 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
       });
     });
 
-    await page.goto(url);
+    await page.goto(url, {
+      timeout: 20_000,
+    });
 
     imageNames = await page.evaluate(async () => {
       let images = [];
       for (const item of window.document.querySelectorAll(
-        ".chapters_selectbox_holder img"
+        ".read-container img"
       )) {
         images.push((item as any).src);
       }
 
       return images;
     });
+
+    if (imageNames.length === 0) {
+      throw new Error("No images found.");
+    }
 
     canAllocateResources.resolve();
 

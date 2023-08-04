@@ -4,10 +4,7 @@ import * as fs from "fs/promises";
 import * as path from "path";
 
 const buildChapterUrl = (chapterId: string) =>
-  `https://ww3.read-onepiece.net/manga/one-piece-chapter-${chapterId}/`;
-
-const matchesChapterPage = (_chapterId: string) => (url: string) =>
-  /.*one-piece-\d\d\d\d.?-\d+.jpe?g$/.test(url);
+  `https://piece-one.live/manga/one-piece-chapter-${chapterId}/`;
 
 const createDeferred = <T>() => {
   let resolve: (value: T) => void;
@@ -31,7 +28,7 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
 
   try {
     browser = await puppeteer.launch({
-      headless: true,
+      headless: false,
     });
 
     tmpDir = await fs.mkdtemp(
@@ -42,16 +39,11 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
     );
 
     const url = buildChapterUrl(config.latestChapterId);
-    const isChapterPageRequest = matchesChapterPage(config.latestChapterId);
     const images: Array<string> = [];
     const page = await browser.newPage();
     page.setDefaultTimeout(5_000);
 
     const d = createDeferred<void>();
-    let timeout = setTimeout(
-      () => d.reject(new Error("No manga found. Probably not published yet.")),
-      60_000
-    );
 
     await page.setRequestInterception(true);
 
@@ -63,38 +55,51 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
       request.continue();
     });
 
-    // TODO: Instead of waiting for the response order and sorting the images,
-    // we could instead traverse the DOM for the correct order.
-    // that approach might be more future proof in case the filenames change.
+    const canAllocateResources = createDeferred<void>();
+    let imageNames = new Array<string>();
+    let fetchedImageCount = 0;
+
     page.on("response", async (response) => {
-      const url = response.url();
+      canAllocateResources.promise.then(async () => {
+        const url = response.url();
 
-      if (
-        response.request().resourceType() === "image" &&
-        isChapterPageRequest(url)
-      ) {
-        const buffer = await response.buffer();
-        const fileName = url
-          .split("/")
-          .pop()!
-          .replace(/-(\d)\.jpg$/, "-0$1.jpg");
-        console.log("got", fileName);
-        const filePath = path.join(tmpDir, fileName);
-        // We add a 0 to the page number to make sure the pages are sorted correctly later on.
-        await fs.writeFile(filePath, buffer);
-        images.push(filePath);
+        const index = imageNames.findIndex((name) => name === url);
 
-        // If we already have 10 images
-        // we can assume that the chapter is almost fully loaded.
-        if (timeout) {
-          clearTimeout(timeout);
+        if (response.request().resourceType() === "image" && index !== -1) {
+          const buffer = await response.buffer();
+          const fileName = `one-piece-${config.latestChapterId}-${String(
+            index + 1
+          ).padStart(2, "0")}.jpg`;
+          console.log("got", fileName);
+          const filePath = path.join(tmpDir, fileName);
+          // We add a 0 to the page number to make sure the pages are sorted correctly later on.
+          await fs.writeFile(filePath, buffer);
+          images.push(filePath);
+
+          fetchedImageCount++;
+
+          if (fetchedImageCount === imageNames.length) {
+            d.resolve();
+          }
         }
-        if (images.length > 10) {
-          setTimeout(() => d.resolve(), 5000);
-        }
-      }
+      });
     });
+
     await page.goto(url);
+
+    imageNames = await page.evaluate(async () => {
+      let images = [];
+      for (const item of window.document.querySelectorAll(
+        ".chapters_selectbox_holder img"
+      )) {
+        images.push((item as any).src);
+      }
+
+      return images;
+    });
+
+    canAllocateResources.resolve();
+
     await d.promise;
     await browser?.close();
 

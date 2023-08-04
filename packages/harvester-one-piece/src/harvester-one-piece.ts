@@ -28,7 +28,7 @@ export async function fetchLatestChapterFromReadOnePiece(config: {
 
   try {
     browser = await puppeteer.launch({
-      headless: false,
+      headless: true,
     });
 
     tmpDir = await fs.mkdtemp(

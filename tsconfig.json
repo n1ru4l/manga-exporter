@@ -11,6 +11,9 @@
       ],
       "@manga-exporter/harvester-one-piece": [
         "./packages/harvester-one-piece/src/index.ts"
+      ],
+      "@manga-exporter/harvester-vagabond": [
+        "./packages/harvester-vagabond/src/index.ts"
       ]
     }
   },

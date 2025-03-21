@@ -1,10 +1,20 @@
-import * as nodepub from "nodepub-rtl";
 import * as _sharp from "sharp";
-import * as fs from "fs/promises";
+import * as fsp from "fs/promises";
+import * as fs from "fs";
 import * as path from "path";
 import * as os from "os";
+import * as _ejs from "ejs";
+import * as _JSZip from "jszip";
 
-const sharp = (_sharp as any).default as typeof _sharp;
+import css_style from "./template/fixed-layout.css.js";
+import containerXML from "./template/container.xml.js";
+import pageTemplate from "./template/page.ejs.js";
+import opfTemplate from "./template/opf.ejs.js";
+import coverTemplate from "./template/cover.ejs.js";
+
+const sharp: typeof _sharp = (_sharp as any).default;
+const ejs: typeof _ejs = (_ejs as any).default ?? _ejs;
+const JSZip: typeof _JSZip = (_JSZip as any).default ?? _JSZip;
 
 const getPageFilename = (page: string, suffix?: "1" | "2") => {
   const filename = page
@@ -12,6 +22,10 @@ const getPageFilename = (page: string, suffix?: "1" | "2") => {
     .pop()!
     .replace(/\.jpg$/, "");
   return `${filename}${suffix ? "-" + suffix : ""}.jpg`;
+};
+
+const jpegOptions: _sharp.JpegOptions = {
+  quality: 100,
 };
 
 const fit = "contain";
@@ -34,7 +48,7 @@ export async function generateEPubManga(config: {
   /** Ordered List of Manga Pages */
   pages: Array<string>;
 }) {
-  const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "manga-exporter-"));
+  const tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), "manga-exporter-"));
   const pages: Array<{ no: string; asset: string }> = [];
   const allImages = new Set<string>();
 
@@ -52,7 +66,8 @@ export async function generateEPubManga(config: {
       const leftOut = path.join(tmpDir, String(index) + "-2.jpg");
       const rightOut = path.join(tmpDir, String(index) + "-1.jpg");
 
-      const imageBuffer = await sharp(await fs.readFile(page))
+      const imageBuffer = await sharp(await fsp.readFile(page))
+        .greyscale()
         .resize({
           width: config.config.size.width * 2,
           height: config.config.size.height,
@@ -68,7 +83,7 @@ export async function generateEPubManga(config: {
           height: config.config.size.height,
           fit,
         })
-        .jpeg()
+        .jpeg(jpegOptions)
         .toFile(out);
 
       const left = await sharp(imageBuffer)
@@ -79,7 +94,7 @@ export async function generateEPubManga(config: {
           left: 0,
           top: 0,
         })
-        .jpeg()
+        .jpeg(jpegOptions)
         .toBuffer();
 
       await sharp(left).trim().toFile(leftOut);
@@ -91,7 +106,7 @@ export async function generateEPubManga(config: {
           left: config.config.size.width,
           top: 0,
         })
-        .jpeg()
+        .jpeg(jpegOptions)
         .toBuffer();
 
       await sharp(right).trim().toFile(rightOut);
@@ -106,24 +121,25 @@ export async function generateEPubManga(config: {
           asset: getPageFilename(out),
         },
         {
-          no: `${pageCount} - 1`,
+          no: `${pageCount}-1`,
           asset: getPageFilename(out, "1"),
         },
         {
-          no: `${pageCount} - 2`,
+          no: `${pageCount}-2`,
           asset: getPageFilename(out, "2"),
         }
       );
     } else {
       const out = path.join(tmpDir, String(index) + ".jpg");
 
-      await sharp(await fs.readFile(page))
+      await sharp(await fsp.readFile(page))
+        .greyscale()
         .resize({
           width: config.config.size.width,
           height: config.config.size.height,
           fit,
         })
-        .jpeg()
+        .jpeg(jpegOptions)
         .toFile(out);
 
       allImages.add(out);
@@ -134,51 +150,68 @@ export async function generateEPubManga(config: {
       });
     }
   }
+  const uuid = crypto.randomUUID();
+  const date = new Date().toISOString().slice(0, 19) + "Z";
 
-  const epub = nodepub.document({
-    id: config.config.id,
-    title: config.config.title,
-    series: config.config.series,
-    language: config.config.language,
-    author: config.config.author,
-    cover: config.config.cover,
-    // @ts-expect-error missing in type definitions
-    pageDirection: "rtl",
-    kindleComicConverter: true,
-    images: Array.from(allImages),
-    originalResWidth: config.config.size.width,
-    originalResHeight: config.config.size.height,
-    showContents: false,
-  });
+  const zip = new JSZip();
+  zip.file("mimetype", "application/epub+zip");
+  const meta = zip.folder("META-INF");
+  meta!.file("container.xml", containerXML);
+  const item = zip.folder("item");
 
-  for (const page of pages) {
-    epub.addSection(
-      `Page ${page.no}`,
-      /* HTML */ `
-        <div style="text-align:center;top:0.0%;">
-          <img
-            width="${config.config.size.width}"
-            height="${config.config.size.height}"
-            src="../images/${page.asset}"
-          />
-        </div>
-      `
-    );
+  const imageFolder = zip.folder("item/image");
 
-    epub.addCSS(/* CSS */ `
-      @page {
-        margin: 0;
-      }
-      body {
-        display: block;
-        margin: 0;
-        padding: 0;
-      }
-    `);
+  for (const image of allImages) {
+    const imageName = path.basename(image);
+    imageFolder!.file(imageName, await fsp.readFile(image));
   }
 
-  await epub.writeEPUB(
-    path.dirname(config.outputFilename),
-    config.outputFilename
+  imageFolder!.file("cover.jpg", await fsp.readFile(config.config.cover));
+
+  const styleFolder = zip.folder("item/style");
+  styleFolder!.file("fixed-layout.css", css_style);
+  var xhtmlFolder = zip.folder("item/xhtml");
+
+  item!.file(
+    "standard.opf",
+    ejs.render(opfTemplate, {
+      uuid4: uuid,
+      title: config.config.title,
+      creator1: config.config.author,
+      date: date,
+      panel_view: "horizontal-rl",
+      page_direction: "rtl",
+      pages,
+    })
   );
+
+  xhtmlFolder!.file(
+    "p-cover.xhtml",
+    ejs.render(coverTemplate, {
+      title: config.config.title,
+      width: config.config.size.width,
+      height: config.config.size.height,
+      covername: pages[0].asset,
+    })
+  );
+
+  for (let page of pages) {
+    xhtmlFolder!.file(
+      page.no + ".xhtml",
+      ejs.render(pageTemplate, {
+        width: config.config.size.width,
+        height: config.config.size.height,
+        image: page.asset,
+        title: config.config.title,
+      })
+    );
+  }
+
+  await new Promise<void>((res, rej) => {
+    zip
+      .generateNodeStream({ type: "nodebuffer", streamFiles: true })
+      .pipe(fs.createWriteStream(config.outputFilename))
+      .on("close", res)
+      .on("error", rej);
+  });
 }

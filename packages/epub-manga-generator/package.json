@@ -4,13 +4,14 @@
   "type": "module",
   "description": "Generate a mange from a list of images.",
   "dependencies": {
-    "nodepub-rtl": "1.0.1",
     "image-size": "1.0.2",
-    "sharp": "0.31.3"
+    "sharp": "0.31.3",
+    "ejs": "3.1.10",
+    "jszip": "3.10.1"
   },
   "devDependencies": {
-    "@types/nodepub": "3.0.0",
-    "@types/sharp": "0.31.0"
+    "@types/sharp": "0.31.0",
+    "@types/ejs": "3.1.5"
   },
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
